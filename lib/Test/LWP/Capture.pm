@@ -87,7 +87,7 @@ sub import {
     _croak "Option 'file' must be defined"
         unless (defined $OPTS{file});
 
-    unless (defined $ENV{PERL_TEST_LWP_CAPTURE}) {
+    unless ($ENV{PERL_TEST_LWP_CAPTURE}) {
         open(my $fh, '<', $OPTS{file}) or
             _croak "Failed to open file '$OPTS{file}' ($!)";
         my $data = do { local $/; <$fh> }; # load whole file
@@ -104,7 +104,7 @@ sub import {
 }
 
 END {
-    if (defined $OPTS{file} and $ENV{PERL_TEST_LWP_CAPTURE}) {
+    if ($DATA and defined $OPTS{file} and $ENV{PERL_TEST_LWP_CAPTURE}) {
         open(my $fh, '>', $OPTS{file}) or
             _croak "Failed to open file '$OPTS{file}' ($!)";
         while (@{$DATA}) {
