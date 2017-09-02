@@ -12,6 +12,14 @@ use LWP::UserAgent;
 
 Test::LWP::Capture - Mock LWP requests using captured data
 
+=begin html
+
+<a href="https://travis-ci.org/mr-mixas/Test-LWP-Capture.pm"><img src="https://travis-ci.org/mr-mixas/Test-LWP-Capture.pm.svg?branch=master" alt="CI"></a>
+<a href='https://coveralls.io/github/mr-mixas/Test-LWP-Capture.pm?branch=master'><img src='https://coveralls.io/repos/github/mr-mixas/Test-LWP-Capture.pm/badge.svg?branch=master' alt='Coverage Status' /></a>
+<a href="https://badge.fury.io/pl/Test-LWP-Capture"><img src="https://badge.fury.io/pl/Test-LWP-Capture.svg" alt="CPAN version"></a>
+
+=end html
+
 =head1 VERSION
 
 Version 0.01
@@ -22,14 +30,34 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
+In test file:
+
     use Test::More;
     use Test::LWP::Capture file => '/path/to/file';
 
     # arbitrary code with LWP usage
 
+or in command line:
+
+    perl -MTest::LWP::Capture=file,captured.txt ./app.pl
+
 =head1 EXPORT
 
-Nothing is exported by default.
+Nothing is exported.
+
+=head1 DESCRIPTION
+
+Distinct feautures:
+
+=over 4
+
+=item * Mock LWP requests for standalone perl programs out of the box
+
+=item * Sessions correctly handled
+
+=item * VCS aware
+
+=back
 
 =cut
 
@@ -116,6 +144,16 @@ END {
     }
 }
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<PERL_TEST_LWP_CAPTURE>
+
+Request/response pairs will be recaptured if set to some true value.
+
+=back
+
 =head1 AUTHOR
 
 Michael Samoglyadov, C<< <mixas at cpan.org> >>
@@ -165,6 +203,10 @@ under the terms of either: the GNU General Public License as published
 by the Free Software Foundation; or the Artistic License.
 
 See L<http://dev.perl.org/licenses/> for more information.
+
+=head1 SEE ALSO
+
+L<Test::LWP::Recorder>, L<Test::VCR::LWP>
 
 =cut
 
