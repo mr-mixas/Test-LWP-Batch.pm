@@ -103,6 +103,8 @@ sub _wrapper {
         push @{$DATA}, $request, $response;
     } else {
         my $key = $request->as_string;
+        _croak "No such request found among captured"
+            unless (exists $DATA->{$key}->[0]);
         $response = HTTP::Response->parse($DATA->{$key}->[0]);
     }
 
