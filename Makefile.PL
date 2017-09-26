@@ -15,7 +15,8 @@ WriteMakefile(
         'ExtUtils::MakeMaker' => 0,
     },
     BUILD_REQUIRES => {
-        'Test::More' => 0,
+        'Test::File::Contents'  => 0,
+        'Test::More'            => 0,
     },
     META_MERGE => {
         resources => {
@@ -32,6 +33,6 @@ WriteMakefile(
         SUFFIX => 'gz',
     },
     clean => {
-        FILES => 'Test-LWP-Capture-*',
+        FILES => 'Test-LWP-Capture-* t/*.got',
     },
 );

@@ -1,0 +1,21 @@
+REQUEST:
+	GET http://www.example.com/
+	
+RESPONSE:
+	200 All goes well
+	Mocked: yes
+	
+REQUEST:
+	GET http://www.example.org/
+	
+RESPONSE:
+	200 All goes well
+	Mocked: yes
+	
+REQUEST:
+	GET http://www.example.com/
+	
+RESPONSE:
+	200 All goes well
+	Mocked: yes
+	
