@@ -4,6 +4,7 @@ use 5.006;
 use strict;
 use warnings FATAL => 'all';
 
+use Carp qw(croak);
 use HTTP::Request;
 use HTTP::Response;
 use LWP::UserAgent;
@@ -53,9 +54,7 @@ Distinct feautures:
 
 =item * Mock LWP requests for standalone perl programs out of the box
 
-=item * Sessions correctly handled
-
-=item * VCS aware
+=item * VCS friendly request/response dumps
 
 =back
 
@@ -74,12 +73,6 @@ BEGIN {
     }
 }
 
-sub _croak {
-    require Carp;
-    Carp::croak @_;
-    delete $OPTS{file}; # to prevent file corruption (END executed on die)
-}
-
 sub _decode {
     my $data = shift;
     $data =~ s/^\t//gm;
@@ -92,20 +85,61 @@ sub _encode {
     return $data;
 }
 
-sub _wrapper {
-    my ($obj, $req) = @_;
+sub _flush {
+    _save_dump($DATA, $OPTS{file}) if ($ENV{PERL_TEST_LWP_CAPTURE});
+}
 
-    my $request = $req->clone(); # 'canonize' it for correct serialize/parse roundtrip
+sub _load_dump {
+    my $file = shift;
+    my $out;
+
+    open(my $fh, '<', $file) or croak "Failed to open file '$file' ($!)";
+    my $data = do { local $/; <$fh> }; # load whole file
+    close($fh);
+
+    $data = [ split /REQUEST:\n/, $data ];
+    shift @{$data}; # throw away unexisted field
+
+    for (@{$data}) {
+        my ($request, $response) = split(/RESPONSE:\n/, $_);
+        push @{$out}, _decode($request), _decode($response);
+    }
+
+    return $out;
+}
+
+sub _save_dump {
+    my ($data, $file) = @_;
+
+    open(my $fh, '>', $file) or croak "Failed to open file '$file' ($!)";
+
+    while (@{$data}) {
+        print $fh "REQUEST:\n",  _encode(shift @{$data});
+        print $fh "RESPONSE:\n", _encode(shift @{$data});
+    }
+
+    close($fh);
+}
+
+sub _wrapper {
+    my $self = shift;
+    my $request = shift->clone(); # for correct serialize/parse roundtrip
     my $response;
 
     if ($ENV{PERL_TEST_LWP_CAPTURE}) {
-        $response = LWP::UserAgent::request($obj, $req);
-        push @{$DATA}, $request, $response;
+        $response = eval { LWP::UserAgent::request($self, $request) };
+        if ($@) {
+            $ENV{PERL_TEST_LWP_CAPTURE} = 0; # prevents garbage dumping
+            croak $@;
+        }
+        push @{$DATA}, $request->as_string, $response->as_string;
     } else {
-        my $key = $request->as_string;
-        _croak "No such request found among captured"
-            unless (exists $DATA->{$key}->[0]);
-        $response = HTTP::Response->parse($DATA->{$key}->[0]);
+        my ($key, $val) = splice @{$DATA}, 0, 2;
+        croak "No such request has been captured (storage exhausted):\n" .
+            $request->as_string unless (defined $key);
+        croak "Request mismatch, expected:\n" . $request->as_string .
+            "\ngot in storage:\n" . $key unless ($request->as_string eq $key);
+        $response = HTTP::Response->parse($val);
     }
 
     return $response;
@@ -114,37 +148,16 @@ sub _wrapper {
 sub import {
     (undef, %OPTS) = @_;
 
-    _croak "Option 'file' must be defined"
+    croak "Option 'file' must be defined"
         unless (defined $OPTS{file});
 
-    unless ($ENV{PERL_TEST_LWP_CAPTURE}) {
-        open(my $fh, '<', $OPTS{file}) or
-            _croak "Failed to open file '$OPTS{file}' ($!)";
-        my $data = do { local $/; <$fh> }; # load whole file
-        close($fh);
-
-        for (split /REQUEST:\n/, $data) {
-            next if ($_ eq ''); # skip first empty field;
-            my ($request, $response) = split(/RESPONSE:\n/, $_);
-            $request  = _decode($request);
-            $response = _decode($response);
-            push @{$DATA->{$request}}, $response;
-        }
-    }
+    $DATA = _load_dump($OPTS{file})
+        unless ($ENV{PERL_TEST_LWP_CAPTURE});
 }
 
 END {
-    if ($DATA and defined $OPTS{file} and $ENV{PERL_TEST_LWP_CAPTURE}) {
-        open(my $fh, '>', $OPTS{file}) or
-            _croak "Failed to open file '$OPTS{file}' ($!)";
-        while (@{$DATA}) {
-            my ($request, $response) = splice @{$DATA}, 0, 2;
-            print $fh "REQUEST:\n",  _encode($request->as_string);
-            print $fh "RESPONSE:\n", _encode($response->as_string);
-        }
-        close($fh);
-    }
-}
+    _flush
+};
 
 =head1 ENVIRONMENT
 

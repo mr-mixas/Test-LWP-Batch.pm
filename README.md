@@ -32,8 +32,7 @@ Nothing is exported.
 Distinct feautures:
 
 - Mock LWP requests for standalone perl programs out of the box
-- Sessions correctly handled
-- VCS aware
+- VCS friendly request/response dumps
 
 # ENVIRONMENT
 
