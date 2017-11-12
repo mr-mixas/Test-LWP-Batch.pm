@@ -20,13 +20,13 @@ use Test::LWP::Capture file => __FILE__ . '.cap';
 my $ua = LWP::UserAgent->new(agent => 'Test::LWP::Capture');
 
 my $response = $ua->get('http://www.example.com/');
-is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.com response');
+is($response->as_string, "200 Ok\nHeader: here\n\nBody here\n", 'example.com response');
 
 $response = $ua->get('http://www.example.org/');
-is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
+is($response->as_string, "200 Ok\nHeader: here\n\nBody here\n", 'example.org response');
 
 $response = $ua->get('http://www.example.com/');
-is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
+is($response->as_string, "200 Ok\nHeader: here\n\nBody here\n", 'example.org response');
 
 $response = eval { $ua->get('http://www.example.com/uncaptured') };
 like($@, qr/No such request has been captured \(storage exhausted\)/);

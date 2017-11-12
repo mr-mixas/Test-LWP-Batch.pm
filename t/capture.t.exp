@@ -3,22 +3,25 @@ REQUEST:
 	User-Agent: Test::LWP::Capture
 	
 RESPONSE:
-	200 All goes well
-	Mocked: yes
+	200 Ok
+	Header: here
 	
+	Body here
 REQUEST:
 	GET http://www.example.org/
 	User-Agent: Test::LWP::Capture
 	
 RESPONSE:
-	200 All goes well
-	Mocked: yes
+	200 Ok
+	Header: here
 	
+	Body here
 REQUEST:
 	GET http://www.example.com/
 	User-Agent: Test::LWP::Capture
 	
 RESPONSE:
-	200 All goes well
-	Mocked: yes
+	200 Ok
+	Header: here
 	
+	Body here

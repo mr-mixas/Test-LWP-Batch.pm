@@ -13,7 +13,7 @@ BEGIN {
 
     *LWP::UserAgent::request = sub {
         shift->prepare_request(shift); # populate request with default headers
-        return HTTP::Response->new(200, "All goes well", ["mocked","yes"]);
+        return HTTP::Response->new(200, "Ok", ["Header","here"], "Body here");
     };
 
     $ENV{PERL_TEST_LWP_CAPTURE} = 1;
@@ -24,14 +24,15 @@ use Test::LWP::Capture file => __FILE__ . '.got';
 my $ua = LWP::UserAgent->new(agent => 'Test::LWP::Capture');
 
 my $response = $ua->get('http://www.example.com/');
-is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.com response');
+is($response->as_string, "200 Ok\nHeader: here\n\nBody here\n", 'example.com response');
 
 $response = $ua->get('http://www.example.org/');
-is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
+is($response->as_string, "200 Ok\nHeader: here\n\nBody here\n", 'example.org response');
 
 $response = $ua->get('http://www.example.com/');
-is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
+is($response->as_string, "200 Ok\nHeader: here\n\nBody here\n", 'example.org response');
 
 Test::LWP::Capture::_flush;
+delete $ENV{PERL_TEST_LWP_CAPTURE}; # don't overwrite .got file on END
 files_eq_or_diff(__FILE__ . '.exp', __FILE__ . '.got', "File contents");
 

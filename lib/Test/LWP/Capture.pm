@@ -102,6 +102,7 @@ sub _load_dump {
 
     for (@{$data}) {
         my ($request, $response) = split(/RESPONSE:\n/, $_);
+        chomp $response;
         push @{$out}, _decode($request), _decode($response);
     }
 
