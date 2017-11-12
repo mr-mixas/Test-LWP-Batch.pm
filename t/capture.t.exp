@@ -1,5 +1,6 @@
 REQUEST:
 	GET http://www.example.com/
+	User-Agent: Test::LWP::Capture
 	
 RESPONSE:
 	200 All goes well
@@ -7,6 +8,7 @@ RESPONSE:
 	
 REQUEST:
 	GET http://www.example.org/
+	User-Agent: Test::LWP::Capture
 	
 RESPONSE:
 	200 All goes well
@@ -14,6 +16,7 @@ RESPONSE:
 	
 REQUEST:
 	GET http://www.example.com/
+	User-Agent: Test::LWP::Capture
 	
 RESPONSE:
 	200 All goes well

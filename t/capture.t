@@ -1,4 +1,5 @@
 #!perl -T
+
 use 5.006;
 use strict;
 use warnings FATAL => 'all';
@@ -11,6 +12,7 @@ BEGIN {
     no warnings 'redefine';
 
     *LWP::UserAgent::request = sub {
+        shift->prepare_request(shift); # populate request with default headers
         return HTTP::Response->new(200, "All goes well", ["mocked","yes"]);
     };
 
@@ -19,13 +21,15 @@ BEGIN {
 
 use Test::LWP::Capture file => __FILE__ . '.got';
 
-my $response = LWP::UserAgent->new()->get('http://www.example.com/');
+my $ua = LWP::UserAgent->new(agent => 'Test::LWP::Capture');
+
+my $response = $ua->get('http://www.example.com/');
 is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.com response');
 
-$response = LWP::UserAgent->new()->get('http://www.example.org/');
+$response = $ua->get('http://www.example.org/');
 is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
 
-$response = LWP::UserAgent->new()->get('http://www.example.com/');
+$response = $ua->get('http://www.example.com/');
 is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
 
 Test::LWP::Capture::_flush;

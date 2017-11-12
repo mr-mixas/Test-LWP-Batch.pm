@@ -122,8 +122,7 @@ sub _save_dump {
 }
 
 sub _wrapper {
-    my $self = shift;
-    my $request = shift->clone(); # for correct serialize/parse roundtrip
+    my ($self, $request) = @_;
     my $response;
 
     if ($ENV{PERL_TEST_LWP_CAPTURE}) {
@@ -134,6 +133,7 @@ sub _wrapper {
         }
         push @{$DATA}, $request->as_string, $response->as_string;
     } else {
+        $self->prepare_request($request); # populate eitt  default headers
         my ($key, $val) = splice @{$DATA}, 0, 2;
         croak "No such request has been captured (storage exhausted):\n" .
             $request->as_string unless (defined $key);

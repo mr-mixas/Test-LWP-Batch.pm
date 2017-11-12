@@ -17,19 +17,21 @@ BEGIN {
 
 use Test::LWP::Capture file => __FILE__ . '.cap';
 
-my $response = LWP::UserAgent->new()->get('http://www.example.com/');
+my $ua = LWP::UserAgent->new(agent => 'Test::LWP::Capture');
+
+my $response = $ua->get('http://www.example.com/');
 is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.com response');
 
-$response = LWP::UserAgent->new()->get('http://www.example.org/');
+$response = $ua->get('http://www.example.org/');
 is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
 
-$response = LWP::UserAgent->new()->get('http://www.example.com/');
+$response = $ua->get('http://www.example.com/');
 is($response->as_string, "200 All goes well\nMocked: yes\n\n", 'example.org response');
 
-$response = eval { LWP::UserAgent->new()->get('http://www.example.com/uncaptured') };
+$response = eval { $ua->get('http://www.example.com/uncaptured') };
 like($@, qr/No such request has been captured \(storage exhausted\)/);
 
 Test::LWP::Capture->import(file => __FILE__ . '.cap'); # reload storage
 
-$response = eval { LWP::UserAgent->new()->get('http://www.example.com/uncaptured') };
-like($@, qr#Request mismatch, expected:\nGET http://www.example.com/uncaptured\n\n\ngot in storage:\nGET http://www.example.com/\n\n#);
+$response = eval { $ua->get('http://www.example.com/uncaptured') };
+like($@, qr#Request mismatch, expected:#);
