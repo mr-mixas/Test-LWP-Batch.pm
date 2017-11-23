@@ -4,7 +4,6 @@ use 5.006;
 use strict;
 use warnings FATAL => 'all';
 
-use Carp qw(croak);
 use HTTP::Request;
 use HTTP::Response;
 use LWP::UserAgent;
@@ -73,6 +72,13 @@ BEGIN {
     }
 }
 
+sub _croak {
+    $ENV{PERL_TEST_LWP_CAPTURE} = 0; # don't dump garbage
+
+    require Carp;
+    Carp::croak @_;
+}
+
 sub _decode {
     my $data = shift;
     $data =~ s/^\t//gm;
@@ -93,7 +99,7 @@ sub _load_dump {
     my $file = shift;
     my $out;
 
-    open(my $fh, '<', $file) or croak "Failed to open file '$file' ($!)";
+    open(my $fh, '<', $file) or _croak "Failed to open file '$file' ($!)";
     my $data = do { local $/; <$fh> }; # load whole file
     close($fh);
 
@@ -112,7 +118,7 @@ sub _load_dump {
 sub _save_dump {
     my ($data, $file) = @_;
 
-    open(my $fh, '>', $file) or croak "Failed to open file '$file' ($!)";
+    open(my $fh, '>', $file) or _croak "Failed to open file '$file' ($!)";
 
     while (@{$data}) {
         print $fh "REQUEST:\n",  _encode(shift @{$data});
@@ -128,17 +134,15 @@ sub _wrapper {
 
     if ($ENV{PERL_TEST_LWP_CAPTURE}) {
         $response = eval { LWP::UserAgent::request($self, $request) };
-        if ($@) {
-            $ENV{PERL_TEST_LWP_CAPTURE} = 0; # prevents garbage dumping
-            croak $@;
-        }
+        _croak $@ if ($@);
+
         push @{$DATA}, $request->as_string, $response->as_string;
     } else {
         $self->prepare_request($request); # populate eitt  default headers
         my ($key, $val) = splice @{$DATA}, 0, 2;
-        croak "No such request has been captured (storage exhausted):\n" .
+        _croak "No such request has been captured (storage exhausted):\n" .
             $request->as_string unless (defined $key);
-        croak "Request mismatch, expected:\n" . $request->as_string .
+        _croak "Request mismatch, expected:\n" . $request->as_string .
             "\ngot in storage:\n" . $key unless ($request->as_string eq $key);
         $response = HTTP::Response->parse($val);
     }
@@ -149,7 +153,7 @@ sub _wrapper {
 sub import {
     (undef, %OPTS) = @_;
 
-    croak "Option 'file' must be defined"
+    _croak "Option 'file' must be defined"
         unless (defined $OPTS{file});
 
     $DATA = _load_dump($OPTS{file})
