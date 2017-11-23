@@ -1,0 +1,10 @@
+REQUEST:
+	GET http://www.example.com/
+	User-Agent: Test::LWP::Capture
+	Hdr-Should-Remain: yes
+	
+RESPONSE:
+	200 Ok
+	Hdr-Should-Remain: yes
+	
+	Body here

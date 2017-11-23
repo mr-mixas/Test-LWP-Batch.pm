@@ -62,6 +62,9 @@ Distinct feautures:
 my %OPTS;
 my $DATA;
 
+our $HOOK_POST_REQUEST;
+our $HOOK_RESPONSE;
+
 BEGIN {
     my $orig_method = \&LWP::UserAgent::request;
     no warnings 'redefine';
@@ -136,14 +139,26 @@ sub _wrapper {
         $response = eval { LWP::UserAgent::request($self, $request) };
         _croak $@ if ($@);
 
+        if ($HOOK_POST_REQUEST) {
+            $HOOK_POST_REQUEST->($request) or
+                _croak "Request hook failed for " . $request->as_string;
+        }
+
+        if ($HOOK_RESPONSE) {
+            $HOOK_RESPONSE->($response) or
+                _croak "Response hook failed for " . $request->as_string;
+        }
+
         push @{$DATA}, $request->as_string, $response->as_string;
     } else {
-        $self->prepare_request($request); # populate eitt  default headers
+        $self->prepare_request($request); # populate request with default headers
+
         my ($key, $val) = splice @{$DATA}, 0, 2;
         _croak "No such request has been captured (storage exhausted):\n" .
             $request->as_string unless (defined $key);
         _croak "Request mismatch, expected:\n" . $request->as_string .
             "\ngot in storage:\n" . $key unless ($request->as_string eq $key);
+
         $response = HTTP::Response->parse($val);
     }
 

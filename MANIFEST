@@ -7,6 +7,8 @@ t/0-load.t
 t/capture.t
 t/capture.t.exp
 t/dumps.t
+t/hooks.t
+t/hooks.t.exp
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
