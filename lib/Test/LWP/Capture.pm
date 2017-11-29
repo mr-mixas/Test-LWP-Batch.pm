@@ -65,6 +65,11 @@ my $DATA;
 our $HOOK_POST_REQUEST;
 our $HOOK_RESPONSE;
 
+our $ACCEPT_REQ_HDR;
+our $DISCARD_REQ_HDR;
+our $ACCEPT_RESP_HDR;
+our $DISCARD_RESP_HDR;
+
 BEGIN {
     my $orig_method = \&LWP::UserAgent::request;
     no warnings 'redefine';
@@ -72,7 +77,16 @@ BEGIN {
     *LWP::UserAgent::request = sub {
         local *LWP::UserAgent::request = $orig_method;
         _wrapper(@_);
-    }
+    };
+
+    $ACCEPT_REQ_HDR = qr/$ENV{TEST_LWP_CAPTURE_ACCEPT_REQ_HDR}/
+        if (defined $ENV{TEST_LWP_CAPTURE_ACCEPT_REQ_HDR});
+    $DISCARD_REQ_HDR = qr/$ENV{TEST_LWP_CAPTURE_DISCARD_REQ_HDR}/
+        if (defined $ENV{TEST_LWP_CAPTURE_DISCARD_REQ_HDR});
+    $ACCEPT_RESP_HDR = qr/$ENV{TEST_LWP_CAPTURE_ACCEPT_RESP_HDR}/
+        if (defined $ENV{TEST_LWP_CAPTURE_ACCEPT_RESP_HDR});
+    $DISCARD_RESP_HDR = qr/$ENV{TEST_LWP_CAPTURE_DISCARD_RESP_HDR}/
+        if (defined $ENV{TEST_LWP_CAPTURE_DISCARD_RESP_HDR});
 }
 
 sub _croak {
@@ -131,6 +145,20 @@ sub _save_dump {
     close($fh);
 }
 
+sub _remove_headers {
+    my ($msg, $accept, $discard) = @_;
+
+    for my $hdr ($msg->headers->header_field_names) {
+        if (defined $discard and $hdr =~ $discard) {
+            $msg->remove_header($hdr);
+            next;
+        }
+
+        $msg->remove_header($hdr)
+            if (defined $accept and $hdr !~ $accept);
+    }
+}
+
 sub _wrapper {
     my ($self, $request) = @_;
     my $response;
@@ -143,15 +171,18 @@ sub _wrapper {
             $HOOK_POST_REQUEST->($request) or
                 _croak "Request hook failed for " . $request->as_string;
         }
+        _remove_headers($request, $ACCEPT_REQ_HDR, $DISCARD_REQ_HDR);
 
         if ($HOOK_RESPONSE) {
             $HOOK_RESPONSE->($response) or
                 _croak "Response hook failed for " . $request->as_string;
         }
+        _remove_headers($response, $ACCEPT_RESP_HDR, $DISCARD_RESP_HDR);
 
         push @{$DATA}, $request->as_string, $response->as_string;
     } else {
         $self->prepare_request($request); # populate request with default headers
+        _remove_headers($request, $ACCEPT_REQ_HDR, $DISCARD_REQ_HDR);
 
         my ($key, $val) = splice @{$DATA}, 0, 2;
         _croak "No such request has been captured (storage exhausted):\n" .
@@ -186,6 +217,17 @@ END {
 =item B<PERL_TEST_LWP_CAPTURE>
 
 Request/response pairs will be recaptured if set to some true value.
+
+=item B<TEST_LWP_CAPTURE_ACCEPT_REQ_HDR>, B<TEST_LWP_CAPTURE_ACCEPT_RESP_HDR>
+
+All headers match provided regexp will be captured, for requests and responces
+respectively. Ignored if not defined.
+
+=item B<TEST_LWP_CAPTURE_DISCARD_REQ_HDR>, B<TEST_LWP_CAPTURE_DISCARD_RESP_HDR>
+
+All headers match provided regexp will be discarded (higher priority than
+according C<ACCEPT> env var. For requests and responces respectively. Ignored
+if not defined.
 
 =back
 

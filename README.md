@@ -40,6 +40,17 @@ Distinct feautures:
 
     Request/response pairs will be recaptured if set to some true value.
 
+- __TEST\_LWP\_CAPTURE\_ACCEPT\_REQ\_HDR__, __TEST\_LWP\_CAPTURE\_ACCEPT\_RESP\_HDR__
+
+    All headers match provided regexp will be captured, for requests and responces
+    respectively. Ignored if not defined.
+
+- __TEST\_LWP\_CAPTURE\_DISCARD\_REQ\_HDR__, __TEST\_LWP\_CAPTURE\_DISCARD\_RESP\_HDR__
+
+    All headers match provided regexp will be discarded (higher priority than
+    according `ACCEPT` env var. For requests and responces respectively. Ignored
+    if not defined.
+
 # AUTHOR
 
 Michael Samoglyadov, `<mixas at cpan.org>`

@@ -1,0 +1,9 @@
+REQUEST:
+	GET http://www.example.com/
+	Hdr-Should-Remain: yes
+	
+RESPONSE:
+	200 Ok
+	Hdr-Should-Remain: yes
+	
+	Body here
